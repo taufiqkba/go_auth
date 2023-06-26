@@ -1,2 +1,2 @@
-### Go Authentication using MySQL
+## Go Authentication using MySQL
 
