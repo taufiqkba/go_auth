@@ -1,13 +1,14 @@
 package config
 
-import "database/sql"
+import (
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
+)
 
-func DB() (db *sql.DB, err error) {
-	dbDriver := "mysql"
-	dbUser := "root"
-	dbPassword := "root"
-	dbName := "go_auth"
-
-	db, err = sql.Open(dbDriver, dbUser+":"+dbPassword+"@/"+dbName)
+func DBConn() (db *sql.DB, err error) {
+	db, err = sql.Open("mysql", "root:root@/go_auth")
+	if err != nil {
+		panic(err)
+	}
 	return
 }

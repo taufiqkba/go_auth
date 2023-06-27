@@ -20,6 +20,13 @@
         <h4>Sign In</h4>
         <p>Sign in using your username and password</p>
         <hr>
+
+        {{if .error}}
+        <div class="alert alert-danger">
+            {{ .error  }}
+        </div>
+        {{end}}
+
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" name="username" class="form-control"/>
