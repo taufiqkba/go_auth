@@ -120,3 +120,16 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
+
+func Register(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		//	direct to register view page
+		temp, err := template.ParseFiles("views/register.gohtml")
+		err = temp.Execute(w, nil)
+		if err != nil {
+			return
+		}
+	} else if r.Method == http.MethodPost {
+		//	registration process
+	}
+}
