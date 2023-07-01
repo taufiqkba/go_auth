@@ -44,9 +44,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		temp, err := template.ParseFiles("views/login.gohtml")
-		if err != nil {
-			panic(err)
-		}
 		err = temp.Execute(w, nil)
 		if err != nil {
 			panic(err)
@@ -131,5 +128,74 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if r.Method == http.MethodPost {
 		//	registration process
+		err := r.ParseForm()
+		if err != nil {
+			return
+		}
+		user := entities.User{
+			Name:      r.Form.Get("name"),
+			Email:     r.Form.Get("email"),
+			Username:  r.Form.Get("username"),
+			Password:  r.Form.Get("password"),
+			CPassword: r.Form.Get("c_password"),
+		}
+
+		errorMessage := make(map[string]interface{})
+		if user.Name == "" {
+			errorMessage["Name"] = "Name can't empty"
+		}
+		if user.Email == "" {
+			errorMessage["Email"] = "Email can't empty"
+		}
+		if user.Username == "" {
+			errorMessage["Username"] = "Username can't empty"
+		}
+		if user.Password == "" {
+			errorMessage["Password"] = "Password can't empty"
+		}
+		if user.CPassword == "" {
+			errorMessage["CPassword"] = "Confirmation Password can't empty"
+		} else {
+			if user.CPassword != user.Password {
+				errorMessage["CPassword"] = "Confirmation Password not match"
+			}
+		}
+		if len(errorMessage) > 0 {
+			//	validation form failes
+			data := map[string]interface{}{
+				"validation": errorMessage,
+			}
+			temp, err := template.ParseFiles("views/register.gohtml")
+			err = temp.Execute(w, data)
+			if err != nil {
+				return
+			}
+		} else {
+			//	hash password using bcrypt
+			hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+			if err != nil {
+				return
+			}
+			user.Password = string(hashPassword) //return back to entities
+
+			//	insert to database
+			_, err = UserModel.Create(user)
+			var message string
+			if err != nil {
+				message = "Register failed: " + message
+			} else {
+				message = "Registration success, click login"
+			}
+
+			data := map[string]interface{}{
+				"message": message,
+			}
+
+			temp, _ := template.ParseFiles("views/register.gohtml")
+			err = temp.Execute(w, data)
+			if err != nil {
+				return
+			}
+		}
 	}
 }

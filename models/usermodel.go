@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+
 	"github.com/taufiqkba/go_auth/config"
 	"github.com/taufiqkba/go_auth/entities"
 )
@@ -35,4 +36,14 @@ func (u UserModel) Where(user *entities.User, fieldName, fieldValue string) erro
 		row.Scan(&user.Id, &user.Name, &user.Email, &user.Username, &user.Password)
 	}
 	return nil
+}
+
+func (u UserModel) Create(user entities.User) (int64, error) {
+	result, err := u.db.Exec("INSERT INTO users (name, email, username, password) values (?,?,?,?)", user.Name, user.Email, user.Username, user.Password)
+	if err != nil {
+		return 0, err
+	}
+
+	lastInsertId, _ := result.LastInsertId()
+	return lastInsertId, nil
 }

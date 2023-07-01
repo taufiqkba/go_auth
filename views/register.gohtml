@@ -21,25 +21,47 @@
         <p>Fill form above for registration</p>
         <hr>
 
+        {{if .message}}
+            <div class="alert alert-success">
+                {{ .message  }}
+            </div>
+            <hr>
+        {{end}}
+
         <div class="mb-3">
             <label for="name" class="form-label">Name</label>
-            <input type="text" class="form-control" name="name" aria-describedby="name">
+            <input type="text" class="form-control {{if .validation.Name }} is-invalid {{end}}" name="name" aria-describedby="name" >
+            <div class="invalid-feedback">
+                {{.validation.Name}}
+            </div>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email address</label>
-            <input type="email" class="form-control" name="email" aria-describedby="emailHelp">
+            <input type="email" class="form-control {{if .validation.Email }} is-invalid {{end}}" name="email" aria-describedby="emailHelp">
+            <div class="invalid-feedback">
+                {{.validation.Email}}
+            </div>
         </div>
         <div class="mb-3">
             <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control" name="username" aria-describedby="username">
+            <input type="text" class="form-control {{if .validation.Username }} is-invalid {{end}}" name="username" aria-describedby="username">
+            <div class="invalid-feedback">
+                {{.validation.Username}}
+            </div>
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" name="password">
+            <input type="password" class="form-control {{if .validation.Password }} is-invalid {{end}}" name="password">
+            <div class="invalid-feedback">
+                {{.validation.Password}}
+            </div>
         </div>
         <div class="mb-3">
             <label for="c_password" class="form-label">Confirm Password</label>
-            <input type="password" class="form-control" name="c_password">
+            <input type="password" class="form-control {{if .validation.CPassword }} is-invalid {{end}}" name="c_password">
+            <div class="invalid-feedback">
+                {{.validation.CPassword}}
+            </div>
         </div>
         <button type="submit" class="btn btn-success btn-block mt-3">Sign Up</button>
         <hr/>
