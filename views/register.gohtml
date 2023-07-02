@@ -30,21 +30,21 @@
 
         <div class="mb-3">
             <label for="name" class="form-label">Name</label>
-            <input type="text" class="form-control {{if .validation.Name }} is-invalid {{end}}" name="name" aria-describedby="name" >
+            <input type="text" value="{{ .user.Name }}" class="form-control {{if .validation.Name }} is-invalid {{end}}" name="name" aria-describedby="name" >
             <div class="invalid-feedback">
                 {{.validation.Name}}
             </div>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email address</label>
-            <input type="email" class="form-control {{if .validation.Email }} is-invalid {{end}}" name="email" aria-describedby="emailHelp">
+            <input type="email" value="{{ .user.Email }}" class="form-control {{if .validation.Email }} is-invalid {{end}}" name="email" aria-describedby="emailHelp">
             <div class="invalid-feedback">
                 {{.validation.Email}}
             </div>
         </div>
         <div class="mb-3">
             <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control {{if .validation.Username }} is-invalid {{end}}" name="username" aria-describedby="username">
+            <input type="text" value="{{ .user.Username }}"  class="form-control {{if .validation.Username }} is-invalid {{end}}" name="username" aria-describedby="username">
             <div class="invalid-feedback">
                 {{.validation.Username}}
             </div>
