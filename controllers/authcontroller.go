@@ -2,14 +2,10 @@ package controllers
 
 import (
 	"errors"
+	"github.com/taufiqkba/go_auth/libraries"
 	"net/http"
-	"reflect"
 	"text/template"
 
-	"github.com/go-playground/locales/en"
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	en2 "github.com/go-playground/validator/v10/translations/en"
 	"github.com/taufiqkba/go_auth/config"
 	"github.com/taufiqkba/go_auth/entities"
 	"github.com/taufiqkba/go_auth/models"
@@ -17,11 +13,12 @@ import (
 )
 
 type UserInput struct {
-	Username string
-	Password string
+	Username string `validate:"required"`
+	Password string `validate:"required"`
 }
 
 var UserModel = models.NewUserModel()
+var validation = libraries.NewValidation()
 
 func Index(w http.ResponseWriter, r *http.Request) {
 
@@ -64,50 +61,64 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			Username: r.Form.Get("username"),
 			Password: r.Form.Get("password"),
 		}
-		var user entities.User
-		err = UserModel.Where(&user, "username", UserInput.Username)
-		if err != nil {
-			return
-		}
 
-		var message error
-		if user.Username == "" {
-			//	user record not found
-			message = errors.New("username or password is invalid")
-		} else {
-			//	check password
-			errPassword := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(UserInput.Password))
-			if errPassword != nil {
-				message = errors.New("username or password is invalid")
-			}
-		}
-
-		if message != nil {
+		errorMessages := validation.Struct(UserInput)
+		if errorMessages != nil {
 			data := map[string]interface{}{
-				"error": message,
+				"validation": errorMessages,
 			}
-			temp, err := template.ParseFiles("views/login.gohtml")
+			temp, _ := template.ParseFiles("views/login.gohtml")
+			err := temp.Execute(w, data)
 			if err != nil {
-				panic(err)
-			}
-			err = temp.Execute(w, data)
-			if err != nil {
-				panic(err)
+				return
 			}
 		} else {
-			//	login using session
-			session, err := config.Store.Get(r, config.SESSION_ID)
-			session.Values["loggedIn"] = true
-			session.Values["email"] = user.Email
-			session.Values["username"] = user.Username
-			session.Values["name"] = user.Name
-			err = session.Save(r, w)
+			var user entities.User
+			err = UserModel.Where(&user, "username", UserInput.Username)
 			if err != nil {
 				return
 			}
 
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			var message error
+			if user.Username == "" {
+				//	user record not found
+				message = errors.New("username or password is invalid")
+			} else {
+				//	check password
+				errPassword := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(UserInput.Password))
+				if errPassword != nil {
+					message = errors.New("username or password is invalid")
+				}
+			}
+
+			if message != nil {
+				data := map[string]interface{}{
+					"error": message,
+				}
+				temp, err := template.ParseFiles("views/login.gohtml")
+				if err != nil {
+					panic(err)
+				}
+				err = temp.Execute(w, data)
+				if err != nil {
+					panic(err)
+				}
+			} else {
+				//	login using session
+				session, err := config.Store.Get(r, config.SESSION_ID)
+				session.Values["loggedIn"] = true
+				session.Values["email"] = user.Email
+				session.Values["username"] = user.Username
+				session.Values["name"] = user.Name
+				err = session.Save(r, w)
+				if err != nil {
+					return
+				}
+
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+			}
 		}
+
 	}
 }
 
@@ -146,99 +157,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			CPassword: r.Form.Get("c_password"),
 		}
 
-		//errorMessage := make(map[string]interface{})
-		//if user.Name == "" {
-		//	errorMessage["Name"] = "Name can't empty"
-		//}
-		//if user.Email == "" {
-		//	errorMessage["Email"] = "Email can't empty"
-		//}
-		//if user.Username == "" {
-		//	errorMessage["Username"] = "Username can't empty"
-		//}
-		//if user.Password == "" {
-		//	errorMessage["Password"] = "Password can't empty"
-		//}
-		//if user.CPassword == "" {
-		//	errorMessage["CPassword"] = "Confirmation Password can't empty"
-		//} else {
-		//	if user.CPassword != user.Password {
-		//		errorMessage["CPassword"] = "Confirmation Password not match"
-		//	}
-		//}
-		//if len(errorMessage) > 0 {
-		//	//	validation form failes
-		//	data := map[string]interface{}{
-		//		"validation": errorMessage,
-		//	}
-		//	temp, err := template.ParseFiles("views/register.gohtml")
-		//	err = temp.Execute(w, data)
-		//	if err != nil {
-		//		return
-		//	}
-		//} else {
-		//	//	hash password using bcrypt
-		//	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-		//	if err != nil {
-		//		return
-		//	}
-		//	user.Password = string(hashPassword) //return back to entities
-		//
-		//	//	insert to database
-		//	_, err = UserModel.Create(user)
-		//	var message string
-		//	if err != nil {
-		//		message = "Register failed: " + message
-		//	} else {
-		//		message = "Registration success, click login"
-		//	}
-		//
-		//	data := map[string]interface{}{
-		//		"message": message,
-		//	}
-		//
-		//	temp, _ := template.ParseFiles("views/register.gohtml")
-		//	err = temp.Execute(w, data)
-		//	if err != nil {
-		//		return
-		//	}
-		//}
-
-		//translator error
-		translator := en.New()
-		uni := ut.New(translator, translator)
-		trans, _ := uni.GetTranslator("en")
-
-		//	validation using go playground
-		validate := validator.New()
-
-		//register default translation english
-		err = en2.RegisterDefaultTranslations(validate, trans)
-		if err != nil {
-			return
-		}
-
-		//change default label error
-		validate.RegisterTagNameFunc(func(field reflect.StructField) string {
-			labelName := field.Tag.Get("label")
-			return labelName
-		})
-
-		validate.RegisterTranslation("required", trans, func(ut ut.Translator) error {
-			return ut.Add("required", "{0} can't empty", true)
-		}, func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("required", fe.Field())
-			return t
-		})
-
-		//validation process
-		vErrors := validate.Struct(user)
-
-		errorMessages := make(map[string]interface{})
-		if vErrors != nil {
-			for _, e := range vErrors.(validator.ValidationErrors) {
-				errorMessages[e.StructField()] = e.Translate(trans)
-			}
+		errorMessages := validation.Struct(user)
+		if errorMessages != nil {
 			data := map[string]interface{}{
 				"validation": errorMessages,
 				"user":       user,
@@ -248,6 +168,20 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return
 			}
+		} else {
+			//	hash password
+			hashPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+			user.Password = string(hashPassword)
+
+			//	insert to database
+			UserModel.Create(user)
+			data := map[string]interface{}{
+				"message": "Registration Success!",
+			}
+
+			//	parsing data to view page
+			temp, _ := template.ParseFiles("views/register.gohtml")
+			temp.Execute(w, data)
 		}
 	}
 }
